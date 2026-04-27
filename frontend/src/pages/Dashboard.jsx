@@ -1,75 +1,78 @@
-import { useEffect, useMemo, useState } from "react";
-import * as XLSX from "xlsx";
+import { useMemo, useState } from "react";
 import FileUpload from "../components/FileUpload";
 import TableView from "../components/TableView";
-import { mergeData } from "../utils/mergeData";
 
 function Dashboard() {
-  const [registrations, setRegistrations] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [verifiedByRow, setVerifiedByRow] = useState({});
-  const mergedData = useMemo(() => {
-    if (!Array.isArray(registrations) || registrations.length === 0) return [];
-    if (!Array.isArray(payments) || payments.length === 0) {
-      return mergeData(registrations, []);
+  const [shortlistedTeams, setShortlistedTeams] = useState([]);
+  const [allTeams, setAllTeams] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTrack, setSelectedTrack] = useState("All Tracks");
+  const [sortBy, setSortBy] = useState("teamNumber");
+
+  const normalizeKey = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ");
+
+  const resolveValue = (row, keys) => {
+    const normalizedRow = new Map(
+      Object.entries(row).map(([key, value]) => [normalizeKey(key), value])
+    );
+
+    for (const key of keys) {
+      const normalizedKey = normalizeKey(key);
+      if (normalizedRow.has(normalizedKey)) {
+        return normalizedRow.get(normalizedKey);
+      }
     }
-    return mergeData(registrations, payments);
-  }, [registrations, payments]);
 
-  const summary = useMemo(() => {
-    const total = mergedData.length;
-    const paid = mergedData.filter(
-      (row) => String(row.paymentStatus || "").trim().toLowerCase() === "paid"
-    ).length;
-    const unpaid = Math.max(total - paid, 0);
-    return { total, paid, unpaid };
-  }, [mergedData]);
-
-  useEffect(() => {
-    const nextState = {};
-    mergedData.forEach((_, index) => {
-      nextState[index] = false;
-    });
-    setVerifiedByRow(nextState);
-  }, [mergedData]);
-
-  const handleToggleVerified = (rowIndex) => {
-    setVerifiedByRow((prev) => ({
-      ...prev,
-      [rowIndex]: !prev[rowIndex],
-    }));
+    return "";
   };
 
-  const handleDownload = () => {
-    if (mergedData.length === 0) return;
+  const teamNameKeys = ["team name", "team_name", "team"];
+  const teamNumberKeys = ["team number", "team no", "team_no", "team id", "team_id", "Team No."];
+  const domainKeys = ["domain", "track", "category"];
 
-    const headerMap = {
-      paymentStatus: "Payment Status",
-      txnId: "Txn ID",
-      Verified: "Verified",
-    };
+  const filteredShortlistedTeams = useMemo(() => {
+    if (!Array.isArray(shortlistedTeams)) return [];
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedTrack = selectedTrack.trim().toLowerCase();
 
-    const exportRows = mergedData.map((row, index) => {
-      const withVerification = {
-        ...row,
-        Verified: verifiedByRow[index] ? "Yes" : "No",
-      };
+    const filtered = shortlistedTeams.filter((row) => {
+      const teamName = resolveValue(row, teamNameKeys);
+      const domain = resolveValue(row, domainKeys);
 
-      return Object.fromEntries(
-        Object.entries(withVerification).map(([key, value]) => [
-          headerMap[key] || key,
-          value,
-        ])
-      );
+      const matchesSearch = !normalizedQuery
+        ? true
+        : String(teamName || "").toLowerCase().includes(normalizedQuery);
+
+      const matchesTrack =
+        normalizedTrack === "all tracks"
+          ? true
+          : String(domain || "").trim().toLowerCase() === normalizedTrack;
+
+      return matchesSearch && matchesTrack;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(exportRows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Merged Data");
-    XLSX.writeFile(workbook, "Final_Team_Data.xlsx");
-  };
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === "teamName") {
+        const aName = String(resolveValue(a, teamNameKeys) || "").toLowerCase();
+        const bName = String(resolveValue(b, teamNameKeys) || "").toLowerCase();
+        return aName.localeCompare(bName);
+      }
 
-  const hasUploads = registrations.length > 0 || payments.length > 0;
+      const aNumber = Number(resolveValue(a, teamNumberKeys));
+      const bNumber = Number(resolveValue(b, teamNumberKeys));
+      if (Number.isNaN(aNumber) && Number.isNaN(bNumber)) return 0;
+      if (Number.isNaN(aNumber)) return 1;
+      if (Number.isNaN(bNumber)) return -1;
+      return aNumber - bNumber;
+    });
+
+    return sorted;
+  }, [shortlistedTeams, searchQuery, selectedTrack, sortBy]);
 
   return (
     <div className="page">
@@ -77,75 +80,77 @@ function Dashboard() {
         <p className="eyebrow">Nexora Analytics</p>
         <h1>Nexora Campus Dashboard</h1>
         <p className="subtitle">
-          Upload registrations and payments to preview consolidated team data.
+          Upload shortlisted and full team data to manage the event workflow.
         </p>
       </header>
 
       <section className="card">
         <div className="section-header">
           <h2>Upload Section</h2>
-          <p>Use two Excel files to prepare the merged report.</p>
+          <p>Shortlisted teams power the table. All teams are stored for lookup.</p>
         </div>
         <div className="upload-grid">
           <FileUpload
-            label="Registration Excel"
-            helperText="Upload the team registration sheet (xlsx/xls)."
-            setData={setRegistrations}
+            label="Shortlisted Teams Excel"
+            helperText="Upload the shortlisted teams sheet (xlsx/xls)."
+            setData={setShortlistedTeams}
           />
           <FileUpload
-            label="Payment Excel"
-            helperText="Upload the payment tracking sheet (xlsx/xls)."
-            setData={setPayments}
+            label="All Teams Excel"
+            helperText="Upload the full registration sheet (xlsx/xls)."
+            setData={setAllTeams}
           />
         </div>
       </section>
 
       <section className="card">
         <div className="section-header">
-          <h2>Summary</h2>
-          <p>Live snapshot based on the merged dataset.</p>
+          <h2>Shortlisted Teams</h2>
+          <p>Showing key fields for the selected teams list.</p>
         </div>
-        <div className="summary-grid">
-          <div className="summary-tile">
-            <p className="summary-label">Total Teams</p>
-            <p className="summary-value">{summary.total}</p>
-          </div>
-          <div className="summary-tile">
-            <p className="summary-label">Paid Teams</p>
-            <p className="summary-value is-paid">{summary.paid}</p>
-          </div>
-          <div className="summary-tile">
-            <p className="summary-label">Unpaid Teams</p>
-            <p className="summary-value is-unpaid">{summary.unpaid}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="card">
-        <div className="section-header">
-          <h2>Merged Data (Preview)</h2>
-          <p>Scrollable table view for large datasets.</p>
-        </div>
-        {hasUploads ? (
-          <div className="table-actions">
-            <button
-              type="button"
-              className="download-button"
-              onClick={handleDownload}
+        <div className="table-actions">
+          <div className="table-toolbar">
+            <label className="search-field">
+              <span className="search-icon" aria-hidden="true">
+                🔍
+              </span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search by team name"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+            </label>
+            <select
+              className="filter-select"
+              aria-label="Filter track"
+              value={selectedTrack}
+              onChange={(event) => setSelectedTrack(event.target.value)}
             >
-              Download Excel
-            </button>
-            <TableView
-              data={mergedData}
-              verifiedByRow={verifiedByRow}
-              onToggleVerified={handleToggleVerified}
-            />
+              <option>All Tracks</option>
+              <option>Healthcare & Social Impact</option>
+              <option>Fintech & Digital Economy</option>
+              <option>Sustainability & Smart Critics</option>
+              <option>AI & Automation</option>
+              <option>Open Innovation</option>
+            </select>
+            <select
+              className="sort-select"
+              aria-label="Sort teams"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+            >
+              <option value="teamNumber">Sort by Team No.</option>
+              <option value="teamName">Sort by Team Name (A-Z)</option>
+            </select>
           </div>
-        ) : (
-          <p className="empty-state">
-            Upload at least one Excel file to preview merged data.
-          </p>
-        )}
+          {shortlistedTeams.length > 0 && filteredShortlistedTeams.length === 0 ? (
+            <p className="empty-state">No results found</p>
+          ) : (
+            <TableView data={filteredShortlistedTeams} />
+          )}
+        </div>
       </section>
     </div>
   );
