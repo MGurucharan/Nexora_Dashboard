@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import FileUpload from "../components/FileUpload";
 import TableView from "../components/TableView";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/sheet-data";
+const API_URL = import.meta.env.VITE_API_URL || "https://nexdash-backend-s2v9.onrender.com/api/sheet-data";
 const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 30000);
 
 function Dashboard() {

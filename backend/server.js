@@ -12,29 +12,11 @@ const app = express();
 const PORT = Number(process.env.PORT || 5000);
 const SHEET_ID = process.env.SHEET_ID;
 const SHEET_RANGE = process.env.SHEET_RANGE || "Sheet1!A1:Z1000";
-const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
 
 app.use(cors());
 app.use(express.json());
 
-function loadCredentials() {
-  if (!fs.existsSync(CREDENTIALS_PATH)) {
-    throw new Error("Missing backend/credentials.json. Add your Google service account key.");
-  }
-
-  const rawCredentials = fs.readFileSync(CREDENTIALS_PATH, "utf8").trim();
-  if (!rawCredentials) {
-    throw new Error("backend/credentials.json is empty.");
-  }
-
-  const credentials = JSON.parse(rawCredentials);
-  if (!credentials.client_email || !credentials.private_key || !credentials.project_id) {
-    throw new Error("backend/credentials.json does not contain a valid service account payload.");
-  }
-
-  return credentials;
-}
 
 function normalizeSheetRows(values) {
   if (!Array.isArray(values) || values.length === 0) {
@@ -61,7 +43,7 @@ app.get("/health", (_request, response) => {
 
 app.get("/api/sheet-data", async (_request, response) => {
   try {
-    const credentials = loadCredentials();
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
 
     const auth = new google.auth.GoogleAuth({
       credentials,
@@ -80,14 +62,7 @@ app.get("/api/sheet-data", async (_request, response) => {
 
     const sheets = google.sheets("v4");
 
-        const meta = await sheets.spreadsheets.get({
-      auth,
-      spreadsheetId: SHEET_ID,
-    });
 
-    meta.data.sheets.forEach(s =>
-      console.log("👉 SHEET:", JSON.stringify(s.properties.title))
-    );
 
     // 1️⃣ Fetch both sheets
   const [teamsRes, paymentsRes] = await Promise.all([
