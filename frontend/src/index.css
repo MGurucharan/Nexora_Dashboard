@@ -1,5 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap");
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 :root {
   --bg: #080b12;
   --surface: rgba(16, 20, 31, 0.9);
@@ -205,13 +209,16 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
 }
 
 .table-toolbar {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 140px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .search-field {
@@ -222,6 +229,8 @@ h1 {
   border-radius: 12px;
   border: 1px solid rgba(46, 230, 244, 0.35);
   background: rgba(8, 12, 22, 0.6);
+  flex: 1;
+  min-width: 250px;
 }
 
 .search-icon {
@@ -244,6 +253,8 @@ h1 {
 
 .filter-select,
 .sort-select {
+  flex: 1;
+  min-width: 140px;
   background: rgba(8, 12, 22, 0.8);
   border: 1px solid rgba(46, 230, 244, 0.2);
   color: var(--text);
@@ -251,14 +262,14 @@ h1 {
   border-radius: 12px;
   font-size: 14px;
   cursor: pointer;
-    outline: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232ee6f4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 36px;
-    color-scheme: dark;
-  }
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232ee6f4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  color-scheme: dark;
+}
   
   .filter-select:focus,
   .sort-select:focus {
@@ -278,7 +289,7 @@ h1 {
     background-color: #0b111c;
     color: #e8eef8;
     padding: 12px;
-}
+  }
 
 .results-badge {
   display: flex;
@@ -289,10 +300,11 @@ h1 {
   border: 1px solid rgba(46, 230, 244, 0.2);
   border-radius: 12px;
   color: var(--accent);
-    font-size: 13px;
+  font-size: 13px;
   font-weight: 600;
-  min-width: 100px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  min-width: max-content;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  flex: none;
 }
 
 .domain-badge {
@@ -475,7 +487,137 @@ h1 {
 
 .filter-group {
   display: flex;
+  gap: 12px;
+  flex: 2;
+  flex-wrap: wrap;
+  min-width: 280px;
+}
+
+/* ── Payment filter pills ── */
+.payment-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.payment-filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.payment-pills {
+  display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.payment-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: var(--sans);
+}
+
+.payment-pill:hover {
+  border-color: rgba(255,255,255,0.25);
+  color: var(--text);
+  background: rgba(255,255,255,0.07);
+}
+
+.payment-pill.active {
+  border-color: var(--accent);
+  background: rgba(46,230,244,0.12);
+  color: var(--accent);
+  box-shadow: 0 0 14px rgba(46,230,244,0.2);
+}
+
+.payment-pill.paid.active {
+  border-color: #32f5c8;
+  background: rgba(50,245,200,0.12);
+  color: #32f5c8;
+  box-shadow: 0 0 14px rgba(50,245,200,0.2);
+}
+
+.payment-pill.unpaid.active {
+  border-color: #ff7b9b;
+  background: rgba(255,123,155,0.12);
+  color: #ff7b9b;
+  box-shadow: 0 0 14px rgba(255,123,155,0.2);
+}
+
+.pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  font-size: 11px;
+  font-weight: 700;
+  color: inherit;
+}
+
+/* ── Toolbar right cluster ── */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Export Excel button ── */
+.export-excel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(50,245,200,0.4);
+  background: rgba(50,245,200,0.08);
+  color: #32f5c8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--sans);
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.export-excel-btn:hover {
+  background: rgba(50,245,200,0.16);
+  border-color: rgba(50,245,200,0.7);
+  box-shadow: 0 0 18px rgba(50,245,200,0.2);
+  transform: translateY(-1px);
+}
+
+.export-excel-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Paid / Unpaid row tints ── */
+.data-table tbody tr.row-paid:hover {
+  background: rgba(50,245,200,0.06);
+}
+
+.data-table tbody tr.row-unpaid:hover {
+  background: rgba(255,123,155,0.06);
 }
 
 @media (max-width: 720px) {
@@ -501,23 +643,55 @@ h1 {
   }
 
   .table-toolbar {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
     gap: 16px;
   }
 
   .filter-group {
     flex-direction: column;
     width: 100%;
+    min-width: unset;
+  }
+
+  .toolbar-right {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .export-excel-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .payment-filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .payment-pills {
+    width: 100%;
+  }
+
+  .payment-pill {
+    flex: 1;
+    justify-content: center;
   }
 
   .filter-select,
   .sort-select {
     width: 100%;
+    min-width: unset;
   }
 
   .search-field {
     width: 100%;
-    box-sizing: border-box;
+    min-width: unset;
+  }
+
+  .results-badge {
+    width: 100%;
   }
 
   .data-table th,

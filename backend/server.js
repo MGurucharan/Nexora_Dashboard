@@ -50,15 +50,16 @@ app.get("/api/sheet-data", async (_request, response) => {
       scopes: SCOPES,
     });
 
-    const clean = (str) => {
-      return str
-        ?.toString()
-        .toLowerCase()
-        .normalize("NFKD")              // 🔥 handles weird unicode
-        .replace(/\s+/g, "")            // remove ALL spaces
-        .replace(/[^a-z0-9]/g, "")      // remove symbols
-        .trim();
-    };
+  const clean = (str) => {
+    return str
+      ?.toString()
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/\u00A0/g, "")        // remove non-breaking space
+      .replace(/\s+/g, "")           // remove ALL spaces
+      .replace(/[^\w]/g, "")         // remove non-alphanumeric
+      .trim();
+  };
 
     const sheets = google.sheets("v4");
 
@@ -90,20 +91,41 @@ app.get("/api/sheet-data", async (_request, response) => {
     paymentMap.set(teamName, row);
   });
 
-    // 3️⃣ Merge
+    
+  const headers = teamsRes.data.values[0];
+
+  const getIndex = (name) =>
+    headers.findIndex(h =>
+      h?.toString().toLowerCase().includes(name)
+    );
+      
+  const idx = {
+    teamNo: getIndex("team no"),
+    teamName: getIndex("team name"),
+    leader: getIndex("team leader"),
+    members: getIndex("team members"),
+    phone: getIndex("leader phone"),
+    email: getIndex("leader email"),
+    project: getIndex("project title"),  // 🔥 FIX
+    domain: getIndex("domain"),          // 🔥 FIX
+    };
+    
+    console.log("INDEXES:", idx);
+
+  // 3️⃣ Merge (CLEAN STRUCTURE)
   const merged = teams.map((team) => {
-    const teamName = clean(team[1]); // from Sheet7
-    console.log("TEAM KEY:", teamName);
+    const teamName = clean(team[idx.teamName]);
     const payment = paymentMap.get(teamName);
 
-    if (!payment) {
-      console.log("❌ NO MATCH:", teamName);
-    } else {
-      console.log("✅ MATCH:", teamName);
-    }
-
     return [
-      ...team,
+      team[idx.teamNo],
+      team[idx.teamName],
+      team[idx.leader],
+      team[idx.members],   // ✅ FIXED (was breaking UI)
+      team[idx.phone],
+      team[idx.email],
+      team[idx.project],
+      team[idx.domain],
       payment?.[7] || "Not Paid",
       payment?.[8] || "-",
       payment?.[9] || "-",
