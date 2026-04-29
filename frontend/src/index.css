@@ -209,7 +209,7 @@ h1 {
 
 .table-toolbar {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 140px;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(260px, 1fr) minmax(120px, 140px);
   gap: 12px;
   align-items: center;
 }
@@ -251,6 +251,8 @@ h1 {
   border-radius: 12px;
   font-size: 14px;
   cursor: pointer;
+  width: 100%;
+  min-width: 0;
     outline: none;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232ee6f4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -474,7 +476,8 @@ h1 {
 }
 
 .filter-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
   gap: 8px;
 }
 
